@@ -1,5 +1,5 @@
 # MOTIVA — Sprint 4
-## Migração para Spring Boot, Spring Data JPA e API REST
+## API REST com Spring Boot e Spring Data JPA
 
 **Projeto acadêmico — FIAP Challenge**
 
@@ -13,111 +13,104 @@
 
 ## Sobre o projeto
 
-O MOTIVA é uma aplicação para monitoramento de vegetação e gerenciamento de roçagem em trechos rodoviários. Nesta Sprint 4, o protótipo com persistência JDBC e DAO da Sprint 3 foi migrado para uma API REST com Spring Boot e Spring Data JPA, mantendo o Oracle e a modelagem do banco desenvolvida anteriormente.
+O MOTIVA é um sistema de monitoramento de vegetação em trechos rodoviários, gerenciamento de equipes de manutenção e controle de intervenções operacionais.
 
-A API permite gerenciar trechos rodoviários, equipes de manutenção e intervenções operacionais, além de gerar relatórios de prioridade e consultar seu histórico.
+Na Sprint 4, o sistema evolui de uma aplicação de console com persistência JDBC para uma API REST desenvolvida com Spring Boot e Spring Data JPA, mantendo o banco de dados Oracle utilizado na Sprint 3.
 
-## Tecnologias
+## Tecnologias utilizadas
 
 - Java 17
 - Spring Boot 4.1.2
-- Spring Web MVC
-- Spring Data JPA / Hibernate
+- Spring Web
+- Spring Data JPA
+- Hibernate
 - Maven
-- Oracle Database e driver `ojdbc17`
+- Oracle Database
+- Oracle JDBC Driver (`ojdbc17`)
 - Git e GitHub
-- cURL ou Postman para testar os endpoints
+- cURL e Postman
 
 ## Arquitetura
 
-A aplicação segue o fluxo **Controller → Service → Repository → Oracle**.
+A aplicação utiliza arquitetura em camadas:
 
 ```text
 src/main/java/br/com/motiva/
 ├── MotivaApplication.java
 ├── model/
-│   ├── TrechoRodovia.java
-│   ├── EquipeManutencao.java
-│   ├── IntervencaoOperacional.java
-│   └── RelatorioPrioridade.java
 ├── repository/
-│   ├── TrechoRodoviaRepository.java
-│   ├── EquipeManutencaoRepository.java
-│   ├── IntervencaoOperacionalRepository.java
-│   └── RelatorioPrioridadeRepository.java
 ├── service/
-│   ├── TrechoRodoviaService.java
-│   ├── EquipeManutencaoService.java
-│   ├── IntervencaoOperacionalService.java
-│   └── GeradorRelatorio.java
 └── controller/
-    ├── TrechoRodoviaController.java
-    ├── EquipeManutencaoController.java
-    ├── IntervencaoOperacionalController.java
-    ├── RelatorioPrioridadeController.java
-    └── GlobalExceptionHandler.java
 ```
 
-- **Model:** entidades JPA que representam as tabelas do banco.
-- **Repository:** interfaces `JpaRepository` e consultas derivadas, sem SQL manual nos controllers ou services.
-- **Service:** validações, regras de negócio e geração do relatório de prioridade.
-- **Controller:** endpoints REST e códigos de resposta HTTP.
-- **GlobalExceptionHandler:** tratamento global de erros de validação e integridade.
+- **Model:** entidades JPA que representam os dados do sistema.
+- **Repository:** interfaces `JpaRepository` responsáveis pela persistência e pelas consultas.
+- **Service:** regras de negócio, validações e classificação de prioridades.
+- **Controller:** endpoints REST e respostas HTTP.
 
-## Banco de dados e configuração
+Fluxo da aplicação:
 
-A aplicação reutiliza as tabelas Oracle da Sprint 3. Os scripts SQL estão na pasta `sql/`:
-
-- `sql/seu-script-criacao.sql`
-- `sql/seu-script-dados.sql`
-- `sql/script-dao.sql`
-- `sql/script-sql.sql`
-
-Execute os scripts necessários no ambiente Oracle da FIAP, de acordo com a estrutura do banco utilizada pelo grupo. A aplicação está configurada com `spring.jpa.hibernate.ddl-auto=none`, portanto o Hibernate não cria nem altera automaticamente as tabelas.
-
-A configuração principal fica em `src/main/resources/application.properties`. As credenciais devem ser fornecidas por variáveis de ambiente, nunca incluídas no repositório.
-
-### Variáveis de ambiente
-
-No Windows PowerShell:
-
-```powershell
-$env:MOTIVA_DB_USER = "seu_usuario"
-$env:MOTIVA_DB_PASSWORD = "sua_senha"
-
-# Opcional: sobrescreve a URL padrão configurada na aplicação
-$env:MOTIVA_DB_URL = "jdbc:oracle:thin:@oracle.fiap.com.br:1521:ORCL"
+```text
+Cliente HTTP → Controller → Service → Repository → Oracle
 ```
 
-No Linux/macOS:
+## Banco de dados
 
-```bash
-export MOTIVA_DB_USER="seu_usuario"
-export MOTIVA_DB_PASSWORD="sua_senha"
+O projeto utiliza o banco Oracle da FIAP, reaproveitando a modelagem e as tabelas definidas na Sprint 3.
 
-# Opcional
-export MOTIVA_DB_URL="jdbc:oracle:thin:@oracle.fiap.com.br:1521:ORCL"
+A conexão é configurada no arquivo `src/main/resources/application.properties`, sem credenciais diretamente no código Java.
+
+Exemplo de configuração:
+
+```properties
+spring.datasource.url=${MOTIVA_DB_URL:jdbc:oracle:thin:@oracle.fiap.com.br:1521:ORCL}
+spring.datasource.username=${MOTIVA_DB_USER}
+spring.datasource.password=${MOTIVA_DB_PASSWORD}
+spring.datasource.driver-class-name=oracle.jdbc.OracleDriver
+
+spring.jpa.hibernate.ddl-auto=none
+spring.jpa.show-sql=false
+spring.jpa.properties.hibernate.format_sql=true
 ```
-
-Confirme com a FIAP o formato de conexão e os dados de acesso válidos para o seu ambiente.
-
-> **Segurança:** não versione arquivos locais com credenciais. O arquivo `application-local.properties` é ignorado pelo `.gitignore`; mantenha-o fora dos commits e não o compartilhe. Se uma senha real já foi incluída em um ZIP, commit ou repositório remoto, troque-a antes de publicar o projeto.
 
 ## Como executar
 
 ### Pré-requisitos
 
 - JDK 17
+- Maven
 - Acesso ao banco Oracle da FIAP
-- Maven instalado ou Maven Wrapper disponível
 
-Na raiz do projeto, configure as variáveis de ambiente e execute:
+### 1. Clonar o repositório
+
+```bash
+git clone URL_DO_REPOSITORIO
+cd NOME_DO_PROJETO
+```
+
+### 2. Configurar as variáveis de ambiente
+
+Windows PowerShell:
+
+```powershell
+$env:MOTIVA_DB_USER="seu_usuario"
+$env:MOTIVA_DB_PASSWORD="sua_senha"
+```
+
+Linux/macOS:
+
+```bash
+export MOTIVA_DB_USER="seu_usuario"
+export MOTIVA_DB_PASSWORD="sua_senha"
+```
+
+### 3. Executar a aplicação
 
 ```bash
 mvn spring-boot:run
 ```
 
-Ou use o Maven Wrapper:
+Ou, utilizando o Maven Wrapper:
 
 ```bash
 ./mvnw spring-boot:run
@@ -129,59 +122,66 @@ No Windows:
 .\mvnw.cmd spring-boot:run
 ```
 
-Por padrão, a API fica disponível em `http://localhost:8080`.
+A API estará disponível em:
 
-## Endpoints
+`http://localhost:8080`
+
+## Endpoints da API
 
 ### Trechos rodoviários
 
-| Método | Endpoint | Descrição | Respostas principais |
-|---|---|---|---|
-| GET | `/api/trechos` | Lista todos os trechos | `200 OK` |
-| GET | `/api/trechos/{id}` | Busca um trecho por ID | `200 OK`, `404 Not Found` |
-| POST | `/api/trechos` | Cadastra um trecho | `201 Created`, `400 Bad Request`, `409 Conflict` |
-| PUT | `/api/trechos/{id}` | Atualiza um trecho | `200 OK`, `400 Bad Request`, `404 Not Found` |
-| DELETE | `/api/trechos/{id}` | Remove um trecho | `204 No Content`, `404 Not Found`, `409 Conflict` |
-| GET | `/api/trechos/densidade/{densidade}` | Filtra por densidade da vegetação | `200 OK` |
-| GET | `/api/trechos/altura-minima/{cm}` | Busca trechos com altura maior ou igual ao valor informado | `200 OK` |
+| Método | Endpoint | Descrição |
+|---|---|---|
+| GET | `/api/trechos` | Lista todos os trechos |
+| GET | `/api/trechos/{id}` | Busca trecho por ID |
+| POST | `/api/trechos` | Cadastra um trecho |
+| PUT | `/api/trechos/{id}` | Atualiza um trecho |
+| DELETE | `/api/trechos/{id}` | Remove um trecho |
+| GET | `/api/trechos/densidade/{densidade}` | Filtra por densidade da vegetação |
+| GET | `/api/trechos/altura-minima/{cm}` | Busca trechos por altura mínima da grama |
 
 ### Equipes de manutenção
 
-| Método | Endpoint | Descrição | Respostas principais |
-|---|---|---|---|
-| GET | `/api/equipes` | Lista as equipes | `200 OK` |
-| GET | `/api/equipes/{id}` | Busca equipe por ID | `200 OK`, `404 Not Found` |
-| POST | `/api/equipes` | Cadastra uma equipe | `201 Created`, `400 Bad Request`, `409 Conflict` |
-| PUT | `/api/equipes/{id}` | Atualiza uma equipe | `200 OK`, `400 Bad Request`, `404 Not Found` |
-| DELETE | `/api/equipes/{id}` | Remove uma equipe | `204 No Content`, `404 Not Found`, `409 Conflict` |
-| GET | `/api/equipes/status/{status}` | Filtra por status (`ATIVA` ou `INATIVA`) | `200 OK` |
+| Método | Endpoint | Descrição |
+|---|---|---|
+| GET | `/api/equipes` | Lista as equipes |
+| GET | `/api/equipes/{id}` | Busca equipe por ID |
+| POST | `/api/equipes` | Cadastra uma equipe |
+| PUT | `/api/equipes/{id}` | Atualiza uma equipe |
+| DELETE | `/api/equipes/{id}` | Remove uma equipe |
+| GET | `/api/equipes/status/{status}` | Filtra equipes por status |
 
 ### Intervenções operacionais
 
-| Método | Endpoint | Descrição | Respostas principais |
-|---|---|---|---|
-| GET | `/api/intervencoes` | Lista as intervenções | `200 OK` |
-| GET | `/api/intervencoes/{id}` | Busca intervenção por ID | `200 OK`, `404 Not Found` |
-| POST | `/api/intervencoes` | Cadastra uma intervenção | `201 Created`, `400 Bad Request`, `409 Conflict` |
-| PUT | `/api/intervencoes/{id}` | Atualiza uma intervenção | `200 OK`, `400 Bad Request`, `404 Not Found` |
-| DELETE | `/api/intervencoes/{id}` | Remove uma intervenção | `204 No Content`, `404 Not Found`, `409 Conflict` |
-| GET | `/api/intervencoes/status/{status}` | Filtra por status da intervenção | `200 OK` |
+| Método | Endpoint | Descrição |
+|---|---|---|
+| GET | `/api/intervencoes` | Lista as intervenções |
+| GET | `/api/intervencoes/{id}` | Busca intervenção por ID |
+| POST | `/api/intervencoes` | Cadastra uma intervenção |
+| PUT | `/api/intervencoes/{id}` | Atualiza uma intervenção |
+| DELETE | `/api/intervencoes/{id}` | Remove uma intervenção |
+| GET | `/api/intervencoes/status/{status}` | Filtra intervenções por status |
 
 ### Relatórios de prioridade
 
-| Método | Endpoint | Descrição | Respostas principais |
-|---|---|---|---|
-| POST | `/api/relatorios` | Gera relatório dos trechos atuais e persiste no histórico | `201 Created` |
-| GET | `/api/relatorios` | Lista o histórico de relatórios | `200 OK` |
-| GET | `/api/relatorios/periodo?inicio={inicio}&fim={fim}` | Consulta relatórios entre duas datas e horários | `200 OK`, `400 Bad Request` |
+| Método | Endpoint | Descrição |
+|---|---|---|
+| POST | `/api/relatorios` | Gera e persiste um relatório de prioridade |
+| GET | `/api/relatorios` | Lista o histórico de relatórios |
+| GET | `/api/relatorios/periodo?inicio={inicio}&fim={fim}` | Consulta relatórios por período |
 
-Para a consulta por período, `inicio` e `fim` devem usar o formato ISO `yyyy-MM-dd'T'HH:mm:ss`, por exemplo `2026-10-01T00:00:00`.
+Os parâmetros de data e hora devem utilizar o formato ISO `yyyy-MM-dd'T'HH:mm:ss`.
 
-### Códigos de erro
+## Códigos HTTP
 
-- `400 Bad Request`: dados inválidos ou regra de negócio violada. O corpo retornado tem o formato `{"erro":"mensagem"}`.
-- `404 Not Found`: registro não encontrado para o ID informado.
-- `409 Conflict`: operação que viola uma restrição de integridade do banco, como chave duplicada ou exclusão de registro ainda referenciado.
+| Código | Significado |
+|---|---|
+| 200 | Requisição executada com sucesso |
+| 201 | Recurso criado |
+| 204 | Recurso removido com sucesso |
+| 400 | Dados inválidos ou erro de validação |
+| 404 | Recurso não encontrado |
+| 409 | Conflito de integridade ou duplicidade |
 
 ## Regras de negócio
 
@@ -203,154 +203,165 @@ Para a consulta por período, `inicio` e `fim` devem usar o formato ISO `yyyy-MM
 ### Intervenções operacionais
 
 - A descrição é obrigatória.
-- Tipos aceitos: `ROCAGEM_MECANICA`, `ROCAGEM_MANUAL`, `CAPINA_MANUAL` e `PODA_VEGETACAO`.
-- Status aceitos: `PLANEJADA`, `EM_ANDAMENTO`, `CONCLUIDA` e `CANCELADA`.
+- Os tipos aceitos são `ROCAGEM_MECANICA`, `ROCAGEM_MANUAL`, `CAPINA_MANUAL` e `PODA_VEGETACAO`.
+- Os status aceitos são `PLANEJADA`, `EM_ANDAMENTO`, `CONCLUIDA` e `CANCELADA`.
 - `dataIntervencao` é obrigatória.
 - `custo` deve ser maior ou igual a zero.
 - `trechoId` e `equipeId` devem corresponder a registros existentes.
 
 ### Classificação de prioridade
 
-O `GeradorRelatorio`, na camada Service, classifica cada trecho usando os critérios definidos na Sprint 3:
+O motor de prioridade, implementado na camada Service, classifica os trechos de acordo com os critérios definidos no projeto.
 
-| Prioridade | Critério |
+| Prioridade | Critérios |
 |---|---|
 | URGENTE | Altura da grama ≥ 30 cm, densidade `CRITICA` ou pelo menos 30 dias sem corte |
 | CRÍTICO | Altura ≥ 25 cm, densidade `ALTA` ou pelo menos 20 dias sem corte, se não for urgente |
 | ATENÇÃO | Altura ≥ 18 cm, densidade `MEDIA` ou pelo menos 10 dias sem corte, se não for urgente ou crítico |
 | NORMAL | Nenhuma das condições anteriores |
 
-O relatório também registra os totais por prioridade e identifica trechos com altura da grama acima de 30 cm, considerados sujeitos à multa conforme a regra adotada pelo projeto.
+Os relatórios registram os resultados da classificação e os totais por prioridade, além de identificar trechos com altura da grama acima de 30 cm.
 
 ## Exemplos de requisições cURL
 
-Os arquivos JSON de exemplo ficam na pasta `exemplos/`. Execute os comandos a partir da raiz do projeto. No Windows PowerShell, utilize `curl.exe`.
-
-### 1. Criar um trecho
+### Listar trechos
 
 ```bash
-curl.exe -i -X POST http://localhost:8080/api/trechos \
+curl -i http://localhost:8080/api/trechos
+```
+
+### Buscar trecho por ID
+
+```bash
+curl -i http://localhost:8080/api/trechos/1
+```
+
+### Criar trecho
+
+```bash
+curl -i -X POST http://localhost:8080/api/trechos \
   -H "Content-Type: application/json" \
-  -d "@exemplos/trecho.json"
+  -d '{
+    "codigo": "TR001",
+    "rodovia": "SP-001",
+    "municipio": "Sao Paulo",
+    "kmInicio": 10.0,
+    "kmFim": 15.0,
+    "alturaGramaCm": 20.0,
+    "densidadeVegetacao": "MEDIA",
+    "diasSemCorte": 10,
+    "ultimaVistoria": "2026-10-20"
+  }'
 ```
 
-### 2. Listar trechos
+### Atualizar trecho
 
 ```bash
-curl.exe -i http://localhost:8080/api/trechos
-```
-
-### 3. Buscar trecho por ID
-
-```bash
-curl.exe -i http://localhost:8080/api/trechos/1
-```
-
-### 4. Atualizar um trecho
-
-```bash
-curl.exe -i -X PUT http://localhost:8080/api/trechos/1 \
+curl -i -X PUT http://localhost:8080/api/trechos/1 \
   -H "Content-Type: application/json" \
-  -d "@exemplos/trecho-atualizado.json"
+  -d '{
+    "codigo": "TR001",
+    "rodovia": "SP-001",
+    "municipio": "Sao Paulo",
+    "kmInicio": 10.0,
+    "kmFim": 15.0,
+    "alturaGramaCm": 15.0,
+    "densidadeVegetacao": "BAIXA",
+    "diasSemCorte": 5,
+    "ultimaVistoria": "2026-10-23"
+  }'
 ```
 
-### 5. Testar validação com altura negativa
+### Remover trecho
 
 ```bash
-curl.exe -i -X POST http://localhost:8080/api/trechos \
-  -H "Content-Type: application/json" \
-  -d "@exemplos/trecho-invalido.json"
+curl -i -X DELETE http://localhost:8080/api/trechos/1
 ```
 
-A requisição deve retornar `400 Bad Request` porque `alturaGramaCm` não pode ser negativa.
-
-### 6. Consultar derived queries
+### Consultar trechos por densidade
 
 ```bash
-curl.exe -i http://localhost:8080/api/trechos/densidade/ALTA
-curl.exe -i http://localhost:8080/api/trechos/altura-minima/25
-curl.exe -i http://localhost:8080/api/equipes/status/ATIVA
-curl.exe -i http://localhost:8080/api/intervencoes/status/PLANEJADA
+curl -i http://localhost:8080/api/trechos/densidade/ALTA
 ```
 
-### 7. Criar equipe e intervenção
+### Consultar trechos por altura mínima
 
 ```bash
-curl.exe -i -X POST http://localhost:8080/api/equipes \
-  -H "Content-Type: application/json" \
-  -d "@exemplos/equipe.json"
-
-curl.exe -i -X POST http://localhost:8080/api/intervencoes \
-  -H "Content-Type: application/json" \
-  -d "@exemplos/intervencao.json"
+curl -i http://localhost:8080/api/trechos/altura-minima/25
 ```
 
-O exemplo de intervenção depende da existência dos IDs de trecho e equipe informados no arquivo `exemplos/intervencao.json`. Ajuste-os para IDs existentes no seu banco.
-
-### 8. Gerar e consultar relatórios
+### Listar equipes ativas
 
 ```bash
-curl.exe -i -X POST http://localhost:8080/api/relatorios
-
-curl.exe -i http://localhost:8080/api/relatorios
-
-curl.exe -i "http://localhost:8080/api/relatorios/periodo?inicio=2026-10-01T00:00:00&fim=2026-12-31T23:59:59"
+curl -i http://localhost:8080/api/equipes/status/ATIVA
 ```
 
-### 9. Remover um trecho
+### Gerar relatório
 
 ```bash
-curl.exe -i -X DELETE http://localhost:8080/api/trechos/ID_DO_TRECHO
+curl -i -X POST http://localhost:8080/api/relatorios
 ```
 
-Substitua `ID_DO_TRECHO` por um ID existente. A remoção pode retornar `409 Conflict` caso existam intervenções vinculadas ao trecho.
+### Consultar histórico
 
-## Derived queries do Spring Data JPA
+```bash
+curl -i http://localhost:8080/api/relatorios
+```
 
-Os repositories declaram métodos cujas consultas são construídas pelo Spring Data JPA a partir dos nomes dos métodos, por exemplo:
+### Consultar relatórios por período
 
-- `findByAlturaGramaCmGreaterThanEqual(Double minimo)`
-- `findByDensidadeVegetacao(String densidadeVegetacao)`
-- `findByStatus(String status)`
-- `findByDataGeracaoBetween(LocalDateTime inicio, LocalDateTime fim)`
+```bash
+curl -i "http://localhost:8080/api/relatorios/periodo?inicio=2026-10-01T00:00:00&fim=2026-10-31T23:59:59"
+```
 
-O framework interpreta as propriedades e condições declaradas e gera a consulta durante a execução. Assim, não é necessário escrever SQL manual para essas operações.
+## Spring Data JPA e derived queries
+
+Os repositories estendem `JpaRepository`, disponibilizando operações de persistência sem a necessidade de implementar manualmente o SQL.
+
+Exemplos de consultas derivadas utilizadas no projeto:
+
+```java
+findByAlturaGramaCmGreaterThanEqual(Double minimo);
+
+findByDensidadeVegetacao(String densidadeVegetacao);
+
+findByStatus(String status);
+
+findByDataGeracaoBetween(
+    LocalDateTime inicio,
+    LocalDateTime fim
+);
+```
+
+O Spring Data JPA interpreta os nomes dos métodos e gera as consultas de acordo com as propriedades das entidades.
 
 ## Perguntas de reflexão
 
 ### 1. Por que o Repository é uma interface? Quem implementa os métodos e quando?
 
-O Repository é uma interface porque declara as operações disponíveis sem precisar implementar manualmente o acesso ao banco. O Spring Data JPA cria uma implementação em tempo de execução quando a aplicação é inicializada, permitindo que o código utilize métodos como `findAll()`, `findById()` e `save()`.
+O Repository é uma interface porque define as operações de acesso aos dados sem precisar implementar manualmente cada método. O Spring Data JPA gera uma implementação em tempo de execução, permitindo utilizar operações como `findAll()`, `findById()` e `save()`.
 
 ### 2. O pattern DAO da Sprint 3 morreu na migração?
 
-Não. A responsabilidade de separar o acesso aos dados das regras de negócio continua existindo. Na Sprint 3, essa responsabilidade era implementada manualmente com DAO e JDBC. Na Sprint 4, os repositories do Spring Data JPA cumprem esse papel e reduzem a quantidade de código necessário.
+Não. O conceito de separar o acesso aos dados das regras de negócio continua existindo. Na Sprint 3, essa responsabilidade era implementada manualmente com classes DAO e JDBC. Na Sprint 4, os repositories do Spring Data JPA assumem esse papel, reduzindo a quantidade de código necessário.
 
 ### 3. Por que validar `alturaGramaCm >= 0` no Service e não no Controller?
 
-Porque é uma regra de negócio do domínio, e não uma regra exclusiva do protocolo HTTP. Ao mantê-la no Service, a validação também pode ser aplicada caso a lógica seja chamada por outra parte da aplicação, sem depender de um controller específico. O Controller deve se concentrar em receber a requisição e devolver a resposta HTTP.
+Porque essa é uma regra de negócio que deve ser respeitada independentemente da forma de acesso ao sistema. O Service centraliza a validação, evitando duplicação e garantindo que diferentes partes da aplicação apliquem a mesma regra.
 
 ### 4. Onde está o SQL do `findByTipo()` e quem o gerou?
 
-O SQL não é escrito manualmente no método. O Spring Data JPA interpreta o nome do método e gera a consulta a partir da propriedade correspondente da entidade. No projeto atual, os repositories usam métodos como `findByStatus`, `findByDensidadeVegetacao` e `findByAlturaGramaCmGreaterThanEqual`.
+O SQL não precisa ser escrito manualmente. O Spring Data JPA interpreta o nome do método, identifica a propriedade correspondente na entidade e gera a consulta em tempo de execução por meio do mecanismo de persistência JPA.
 
 ## Evidências de funcionamento
 
-Para a entrega, registrem pelo menos seis requisições reais funcionando, incluindo operações CRUD e relatório. Sugestão:
+A entrega inclui registros de requisições executadas com sucesso para demonstrar as funcionalidades da API.
 
-1. `GET /api/trechos`
-2. `POST /api/trechos`
-3. `PUT /api/trechos/{id}`
-4. `DELETE /api/trechos/{id}`
-5. `POST /api/relatorios`
-6. `GET /api/relatorios`
-7. `GET /api/relatorios/periodo?inicio=...&fim=...`
+As evidências devem contemplar operações CRUD, consultas derivadas e geração e consulta de relatórios, utilizando o Postman ou cURL.
 
-Adicionem ao repositório as capturas de tela do Postman ou terminal em uma pasta como `docs/evidencias/`. Os exemplos deste README documentam como testar a API, mas não substituem evidências de execução real.
+## Versionamento
 
-## Git e boas práticas
-
-O projeto utiliza `.gitignore` para excluir arquivos gerados (`target/`), configurações locais de IDE e o arquivo `application-local.properties`.
+O projeto utiliza Git e GitHub para controle de versão, com commits incrementais durante o desenvolvimento.
 
 Exemplos de mensagens de commit:
 
@@ -364,8 +375,10 @@ feat: persist and query priority reports
 docs: document API endpoints and execution
 ```
 
-Nunca inclua senhas reais, tokens ou credenciais no código ou no histórico do Git.
+Arquivos gerados, configurações locais e credenciais não devem ser versionados.
 
 ## Conclusão
 
-A Sprint 4 transforma o MOTIVA em uma API REST organizada em camadas, com persistência por Spring Data JPA, validações centralizadas nos Services, consultas derivadas e geração de relatórios históricos. A solução mantém as regras de negócio desenvolvidas nas sprints anteriores e disponibiliza as funcionalidades por meio de endpoints HTTP.
+A Sprint 4 transforma o MOTIVA em uma API REST utilizando Spring Boot e Spring Data JPA, mantendo a persistência no Oracle e as regras de negócio desenvolvidas nas sprints anteriores. A arquitetura em camadas melhora a organização do código, facilita a manutenção e permite que o sistema seja consumido por diferentes clientes HTTP.
+
+**FIAP Challenge — MOTIVA | Sprint 4**
